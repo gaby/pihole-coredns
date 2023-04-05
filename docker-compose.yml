@@ -1,0 +1,53 @@
+networks:
+  pi-net:
+    name: pi-net
+    ipam:
+      config:
+      - subnet: 172.10.10.0/24
+
+services:
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    networks:
+      pi-net:
+        ipv4_address: 172.10.10.100
+    ports:
+      - "53:53/tcp"
+      - "53:53/udp"
+      - "80:80/tcp"
+    environment:
+      TZ: 'Etc/UTC'
+      PIHOLE_DNS_: 'dns-primary#5301;dns-secondary#5301'
+      WEBPASSWORD: 'Secure1-Password-Here'
+    volumes:
+      - './etc-pihole:/etc/pihole'
+      - './dnsmasq/02-allservers.conf:/etc/dnsmasq.d/02-allservers.conf'
+      - './dnsmasq/03-forward.conf:/etc/dnsmasq.d/03-forward.conf'
+    restart: unless-stopped
+
+  dns-primary:
+    container_name: dns-primary
+    image: coredns/coredns:latest
+    command: ["-conf", "/etc/coredns/Corefile"]
+    networks:
+      pi-net:
+        ipv4_address: 172.10.10.101
+    expose:
+      - 5301/udp
+    volumes:
+      - './coredns/Corefile:/etc/coredns/Corefile'
+    restart: unless-stopped
+
+  dns-secondary:
+    container_name: dns-secondary
+    image: coredns/coredns:latest
+    command: ["-conf", "/etc/coredns/Corefile"]
+    networks:
+      pi-net:
+        ipv4_address: 172.10.10.102
+    expose:
+      - 5301/udp
+    volumes:
+      - './coredns/Corefile:/etc/coredns/Corefile'
+    restart: unless-stopped

@@ -1,0 +1,24 @@
+.:5301 {
+    errors
+    cache
+    forward . 127.0.0.1:5302 127.0.0.1:5303
+    log . "{remote}:{port} - {type} {class} {proto} {size} {rcode} {duration}"
+}
+
+.:5302 {
+    errors
+    cache
+    forward . tls://8.8.8.8 tls://8.8.4.4 {
+        tls_servername dns.google
+        health_check 5s
+    }
+}
+
+.:5303 {
+    errors
+    cache
+    forward . tls://1.1.1.1 tls://1.0.0.1 {
+        tls_servername cloudflare-dns.com
+        health_check 5s
+    }
+}
